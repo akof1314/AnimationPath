@@ -234,28 +234,4 @@ public static class AnimationWindowUtil
         currentTimeInfo.SetValue(animationWindowState, time, null);
         animationWindow.Repaint();
     }
-
-    private static void OnClipSelectionChange()
-    {
-        Debug.Log(1);
-    }
-
-    private class AnimationWindowReflect
-    {
-        private Assembly m_Assembly;
-
-        public Assembly assembly
-        {
-            get
-            {
-                if (m_Assembly == null)
-                {
-                    m_Assembly = Assembly.GetAssembly(typeof(EditorGUIUtility));
-                }
-                return m_Assembly;
-            }
-        }
-
-
-    }
 }

@@ -21,6 +21,7 @@ public static class AnimationPathSceneUI
     private static GUIContent contentPointShow = new GUIContent("Point Show");
     private static GUIContent contentGameObject = new GUIContent("Anim Object");
     private static GUIContent contentClip = new GUIContent("Anim Clip");
+    private static GUIContent contentOtherUse = new GUIContent("Other Anim Object have used.");
 
     public static void OnInspectorGUI(GameObject go)
     {
@@ -40,6 +41,15 @@ public static class AnimationPathSceneUI
             CloseSceneTool();
         }
         EditorGUILayout.Space();
+
+        if (go != activeGameObject)
+        {
+            EditorGUILayout.BeginVertical(GUI.skin.box);
+            EditorGUILayout.LabelField(contentOtherUse);
+            EditorGUILayout.ObjectField(contentGameObject, activeGameObject, typeof (GameObject), true);
+            EditorGUILayout.EndVertical();
+            return;
+        }
 
         EditorGUI.BeginChangeCheck();
         keepShow = EditorGUILayout.Toggle(contentKeepShow, keepShow);
@@ -115,7 +125,7 @@ public static class AnimationPathSceneUI
         SceneView.RepaintAll();
     }
 
-    private static void InitPointsInfo()
+    private static bool InitPointsInfo()
     {
         if (animationPoints == null)
         {
@@ -132,7 +142,7 @@ public static class AnimationPathSceneUI
             {
                 if (tr == tr.root)
                 {
-                    return;
+                    return false;
                 }
                 tr = tr.parent;
             }
@@ -144,8 +154,15 @@ public static class AnimationPathSceneUI
         AnimationCurve curveX = AnimationUtility.GetEditorCurve(activeAnimationClip, EditorCurveBinding.FloatCurve(inPath, inType, "m_LocalPosition.x"));
         AnimationCurve curveY = AnimationUtility.GetEditorCurve(activeAnimationClip, EditorCurveBinding.FloatCurve(inPath, inType, "m_LocalPosition.y"));
         AnimationCurve curveZ = AnimationUtility.GetEditorCurve(activeAnimationClip, EditorCurveBinding.FloatCurve(inPath, inType, "m_LocalPosition.z"));
-        
+
+        if (curveX == null || curveY == null || curveZ == null)
+        {
+            Debug.LogError(activeGameObject.name + " 必须要有完整的 Position 动画曲线！");
+            return false;
+        }
+
         animationPoints = AnimationPathPoint.MakePoints(curveX, curveY, curveZ);
+        return true;
     }
 
     private static void OnSceneViewGUI(SceneView sceneView)
@@ -205,16 +222,31 @@ public static class AnimationPathSceneUI
 
     private static void onClipSelectionChanged()
     {
-        if (enabled)
+        if (enabled && !keepShow)
         {
             activeAnimationClip = AnimationWindowUtil.GetActiveAnimationClip(onClipSelectionChanged);
-            InitPointsInfo();
-            SceneView.RepaintAll();
+
+            AnimationClip[] clips = AnimationUtility.GetAnimationClips(activeRootGameObject);
+            for (int i = 0; i < clips.Length; i++)
+            {
+                if (clips[i] == activeAnimationClip)
+                {
+                    InitPointsInfo();
+                    SceneView.RepaintAll();
+                    return;
+                }
+            }
+            CloseSceneTool();
         }
     }
 
     private static Vector3 GetWorldPosition(Vector3 localPosition)
     {
+        if (activeRootGameObject != activeGameObject)
+        {
+            return activeRootGameObject.transform.TransformPoint(localPosition);
+        }
+
         Transform parent = activeRootGameObject.transform.parent;
         if (parent == null)
         {
