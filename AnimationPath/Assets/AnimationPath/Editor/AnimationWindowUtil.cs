@@ -153,6 +153,17 @@ public static class AnimationWindowUtil
         return animationWindowReflect.currentTime;
     }
 
+    public static void Repaint()
+    {
+        AnimationWindowReflect animationWindowReflect = GetAnimationWindowReflect();
+        if (!animationWindowReflect.firstAnimationWindow)
+        {
+            return;
+        }
+
+        animationWindowReflect.firstAnimationWindow.Repaint();
+    }
+
     private static AnimationWindowReflect GetAnimationWindowReflect()
     {
         AnimationWindowReflect animationWindowReflect = new AnimationWindowReflect();
