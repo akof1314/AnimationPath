@@ -83,6 +83,19 @@ public static class AnimationPathSceneUI
                 AnimationMode.StopAnimationMode();
             }
         }
+        if (GUILayout.Button("注册动画时间"))
+        {
+            AnimationWindowUtil.RegisterTimeChangeListener(OnAnimationWindowTimeChange);
+        }
+        if (GUILayout.Button("取消注册动画时间"))
+        {
+            AnimationWindowUtil.UnRegisterTimeChangeListener();
+        }
+    }
+
+    private static void OnAnimationWindowTimeChange(float time)
+    {
+        Debug.Log(time);
     }
 
     public static void OnSceneGUI()
@@ -99,14 +112,14 @@ public static class AnimationPathSceneUI
         activeGameObject = go;
 
         CloseSceneTool();
-        activeAnimationClip = AnimationWindowUtil.GetActiveAnimationClip(onClipSelectionChanged);
+        activeAnimationClip = AnimationWindowUtil.GetActiveAnimationClip();
         if (activeAnimationClip == null)
         {
-            SceneView.RepaintAll();
             return;
         }
 
         InitPointsInfo();
+        AnimationWindowUtil.SetOnClipSelectionChanged(onClipSelectionChanged);
         AnimationUtility.onCurveWasModified += OnCurveWasModified;
         if (keepShow)
         {
@@ -120,6 +133,7 @@ public static class AnimationPathSceneUI
     private static void CloseSceneTool()
     {
         enabled = false;
+        AnimationWindowUtil.SetOnClipSelectionChanged(onClipSelectionChanged, true);
         AnimationUtility.onCurveWasModified -= OnCurveWasModified;
         SceneView.onSceneGUIDelegate = (SceneView.OnSceneFunc)Delegate.RemoveAll(SceneView.onSceneGUIDelegate, new SceneView.OnSceneFunc(OnSceneViewGUI));
         SceneView.RepaintAll();
@@ -222,9 +236,10 @@ public static class AnimationPathSceneUI
 
     private static void onClipSelectionChanged()
     {
+        Debug.Log("onClipSelectionChanged");
         if (enabled && !keepShow)
         {
-            activeAnimationClip = AnimationWindowUtil.GetActiveAnimationClip(onClipSelectionChanged);
+            activeAnimationClip = AnimationWindowUtil.GetActiveAnimationClip();
 
             AnimationClip[] clips = AnimationUtility.GetAnimationClips(activeRootGameObject);
             for (int i = 0; i < clips.Length; i++)

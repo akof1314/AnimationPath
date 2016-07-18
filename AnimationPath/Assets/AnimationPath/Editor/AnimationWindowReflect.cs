@@ -1,8 +1,7 @@
 ﻿using System;
-using UnityEngine;
 using System.Collections;
-using System.IO;
 using System.Reflection;
+using UnityEngine;
 using UnityEditor;
 
 public class AnimationWindowReflect
