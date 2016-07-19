@@ -1,6 +1,5 @@
 ﻿using System;
 using UnityEngine;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEditor;
 
@@ -68,35 +67,10 @@ public static class AnimationPathSceneUI
         {
             SceneView.RepaintAll();
         }
-        EditorGUILayout.ObjectField(contentGameObject, activeGameObject, typeof (GameObject), true);
         EditorGUI.BeginDisabledGroup(true);
+        EditorGUILayout.ObjectField(contentGameObject, activeGameObject, typeof (GameObject), true);
         EditorGUILayout.ObjectField(contentClip, activeAnimationClip, typeof(AnimationClip), false);
         EditorGUI.EndDisabledGroup();
-
-        if (GUILayout.Button("222222"))
-        {
-            if (!AnimationMode.InAnimationMode())
-            {
-                AnimationMode.StartAnimationMode();
-                AnimationMode.BeginSampling();
-                AnimationMode.SampleAnimationClip(activeRootGameObject, activeAnimationClip, 0f);
-                AnimationMode.EndSampling();
-                AnimationMode.StopAnimationMode();
-            }
-        }
-        if (GUILayout.Button("注册动画时间"))
-        {
-            AnimationWindowUtil.RegisterTimeChangeListener(OnAnimationWindowTimeChange);
-        }
-        if (GUILayout.Button("取消注册动画时间"))
-        {
-            AnimationWindowUtil.UnRegisterTimeChangeListener();
-        }
-    }
-
-    private static void OnAnimationWindowTimeChange(float time)
-    {
-        Debug.Log(time);
     }
 
     public static void OnSceneGUI()
@@ -297,7 +271,6 @@ public static class AnimationPathSceneUI
 
     private static void OnCurveWasModified(AnimationClip clip, EditorCurveBinding binding, AnimationUtility.CurveModifiedType deleted)
     {
-        Debug.Log(3);
         if (!enabled && activeAnimationClip != clip)
         {
             return;
@@ -310,7 +283,6 @@ public static class AnimationPathSceneUI
 
     private static void onClipSelectionChanged()
     {
-        Debug.Log("onClipSelectionChanged");
         if (enabled && !keepShow)
         {
             activeAnimationClip = AnimationWindowUtil.GetActiveAnimationClip();

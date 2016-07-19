@@ -1,7 +1,5 @@
 ﻿using UnityEngine;
-using System.Collections;
 using System.Collections.Generic;
-using UnityEditor.AnimatedValues;
 
 public class AnimationPathPoint
 {
@@ -44,15 +42,41 @@ public class AnimationPathPoint
     public static List<AnimationPathPoint> MakePoints(AnimationCurve curveX, AnimationCurve curveY, AnimationCurve curveZ)
     {
         List<AnimationPathPoint> points = new List<AnimationPathPoint>();
+        List<float> times = new List<float>();
         for (int i = 0; i < curveX.length; i++)
         {
-            Keyframe key = curveX.keys[i];
-            AnimationPathPoint pathPoint = new AnimationPathPoint(key,
-                GetKeyframeAtTime(curveY, key.time),
-                GetKeyframeAtTime(curveZ, key.time)
+            if (!times.Contains(curveX.keys[i].time))
+            {
+                times.Add(curveX.keys[i].time);
+            }
+        }
+        for (int i = 0; i < curveY.length; i++)
+        {
+            if (!times.Contains(curveY.keys[i].time))
+            {
+                times.Add(curveY.keys[i].time);
+            }
+        }
+        for (int i = 0; i < curveZ.length; i++)
+        {
+            if (!times.Contains(curveZ.keys[i].time))
+            {
+                times.Add(curveZ.keys[i].time);
+            }
+        }
+        times.Sort();
+
+        for (int i = 0; i < times.Count; i++)
+        {
+            float time = times[i];
+            AnimationPathPoint pathPoint = new AnimationPathPoint(
+                GetKeyframeAtTime(curveX, time),
+                GetKeyframeAtTime(curveY, time),
+                GetKeyframeAtTime(curveZ, time)
                 );
             points.Add(pathPoint);
         }
+
         return points;
     }
 
@@ -65,7 +89,10 @@ public class AnimationPathPoint
                 return curve.keys[j];
             }
         }
-        return new Keyframe(time, curve.Evaluate(time));
+
+        float num = 0.0001f;
+        float num2 = (curve.Evaluate(time + num) - curve.Evaluate(time - num)) / (num * 2f);
+        return new Keyframe(time, curve.Evaluate(time), num2, num2);
     }
 
     public static void ModifyPointTangent(AnimationPathPoint pathPoint, AnimationPathPoint nextPathPoint,
@@ -76,65 +103,53 @@ public class AnimationPathPoint
         Vector3 endTangent;
         CalcTangents(pathPoint, nextPathPoint, out startTangent, out endTangent);
 
-        Keyframe keyframeX = new Keyframe();
-        Keyframe keyframeY = keyframeX;
-        Keyframe keyframeZ = keyframeX;
+        float time;
+        Vector3 position;
+        Vector3 inTangent;
+        Vector3 outTangent;
+        int[] tangentMode;
+
         float dx = nextPathPoint.time - pathPoint.time;
         if (isInTangent)
         {
+            time = nextPathPoint.time;
+            position = nextPathPoint.position;
+
             endTangent += offset;
-            Vector3 inTangent = (nextPathPoint.position - endTangent) / dx * 3f;
-
-            keyframeX = new Keyframe(nextPathPoint.time, nextPathPoint.position.x, inTangent.x, nextPathPoint.outTangent.x);
-            keyframeY = new Keyframe(nextPathPoint.time, nextPathPoint.position.y, inTangent.y, nextPathPoint.outTangent.y);
-            keyframeZ = new Keyframe(nextPathPoint.time, nextPathPoint.position.z, inTangent.z, nextPathPoint.outTangent.z);
-
-            keyframeX.tangentMode = nextPathPoint.tangentMode[0];
-            keyframeY.tangentMode = nextPathPoint.tangentMode[1];
-            keyframeZ.tangentMode = nextPathPoint.tangentMode[2];
-            ModifyPointTangentMode(ref keyframeX, 0);
-            ModifyPointTangentMode(ref keyframeY, 0);
-            ModifyPointTangentMode(ref keyframeZ, 0);
+            inTangent = (nextPathPoint.position - endTangent) / dx * 3f;
+            outTangent = nextPathPoint.outTangent;
+            tangentMode = nextPathPoint.tangentMode;
         }
         else
         {
+            time = pathPoint.time;
+            position = pathPoint.position;
+
             startTangent += offset;
-            Vector3 outTangent = (startTangent - pathPoint.position) / dx * 3f;
-
-            keyframeX = new Keyframe(pathPoint.time, pathPoint.position.x, pathPoint.inTangent.x, outTangent.x);
-            keyframeY = new Keyframe(pathPoint.time, pathPoint.position.y, pathPoint.inTangent.y, outTangent.y);
-            keyframeZ = new Keyframe(pathPoint.time, pathPoint.position.z, pathPoint.inTangent.z, outTangent.z);
-
-            keyframeX.tangentMode = pathPoint.tangentMode[0];
-            keyframeY.tangentMode = pathPoint.tangentMode[1];
-            keyframeZ.tangentMode = pathPoint.tangentMode[2];
-            ModifyPointTangentMode(ref keyframeX, 1);
-            ModifyPointTangentMode(ref keyframeY, 1);
-            ModifyPointTangentMode(ref keyframeZ, 1);
+            inTangent = pathPoint.inTangent;
+            outTangent = (startTangent - pathPoint.position) / dx * 3f;
+            tangentMode = pathPoint.tangentMode;
         }
 
-        for (int j = 0; j < curveX.length; j++)
+        int leftRight = isInTangent ? 0 : 1;
+        ModifyCurveAtKeyframe(curveX, time, position.x, inTangent.x, outTangent.x, tangentMode[0], leftRight);
+        ModifyCurveAtKeyframe(curveY, time, position.y, inTangent.y, outTangent.y, tangentMode[1], leftRight);
+        ModifyCurveAtKeyframe(curveZ, time, position.z, inTangent.z, outTangent.z, tangentMode[2], leftRight);
+    }
+
+    private static void ModifyCurveAtKeyframe(AnimationCurve curve, float time, float value, float inTangent, float outTangent, 
+        int tangentMode, int leftRight)
+    {
+        Keyframe keyframe = new Keyframe(time, value, inTangent, outTangent);
+        keyframe.tangentMode = tangentMode;
+        ModifyPointTangentMode(ref keyframe, leftRight);
+
+        for (int j = 0; j < curve.length; j++)
         {
-            if (Mathf.Approximately(curveX.keys[j].time, keyframeX.time))
+            if (Mathf.Approximately(curve.keys[j].time, keyframe.time))
             {
-                curveX.MoveKey(j, keyframeX);
-                break;
-            }
-        }
-        for (int j = 0; j < curveY.length; j++)
-        {
-            if (Mathf.Approximately(curveY.keys[j].time, keyframeY.time))
-            {
-                curveY.MoveKey(j, keyframeY);
-                break;
-            }
-        }
-        for (int j = 0; j < curveZ.length; j++)
-        {
-            if (Mathf.Approximately(curveZ.keys[j].time, keyframeZ.time))
-            {
-                curveZ.MoveKey(j, keyframeZ);
-                break;
+                curve.MoveKey(j, keyframe);
+                return;
             }
         }
     }
