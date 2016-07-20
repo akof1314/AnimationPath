@@ -137,7 +137,7 @@ public class AnimationPathPoint
         ModifyCurveAtKeyframe(curveZ, time, position.z, inTangent.z, outTangent.z, tangentMode[2], leftRight);
     }
 
-    private static void ModifyCurveAtKeyframe(AnimationCurve curve, float time, float value, float inTangent, float outTangent, 
+    private static void ModifyCurveAtKeyframe(AnimationCurve curve, float time, float value, float inTangent, float outTangent,
         int tangentMode, int leftRight)
     {
         Keyframe keyframe = new Keyframe(time, value, inTangent, outTangent);

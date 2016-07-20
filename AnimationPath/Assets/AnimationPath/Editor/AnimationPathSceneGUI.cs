@@ -11,6 +11,7 @@ public static class AnimationPathSceneUI
     private static bool keepShow;
     private static bool pointShow = true;
     private static GameObject activeRootGameObject;
+    private static Transform activeParentTransform;
     private static List<AnimationPathPoint> animationPoints;
     private static int selectedPointIndex;
 
@@ -140,7 +141,8 @@ public static class AnimationPathSceneUI
             activeRootGameObject = tr.gameObject;
             inPath = AnimationUtility.CalculateTransformPath(activeGameObject.transform, activeRootGameObject.transform);
         }
-        
+        activeParentTransform = activeGameObject.transform.parent;
+
         Type inType = typeof(Transform);
         AnimationCurve curveX = AnimationUtility.GetEditorCurve(activeAnimationClip, EditorCurveBinding.FloatCurve(inPath, inType, "m_LocalPosition.x"));
         AnimationCurve curveY = AnimationUtility.GetEditorCurve(activeAnimationClip, EditorCurveBinding.FloatCurve(inPath, inType, "m_LocalPosition.y"));
@@ -200,6 +202,9 @@ public static class AnimationPathSceneUI
 
         if (pointShow)
         {
+            Quaternion handleRotation = activeParentTransform != null
+                ? activeParentTransform.rotation
+                : Quaternion.identity;
             for (int i = 0; i < numPos; i++)
             {
                 int pointIndex = i*3;
@@ -208,7 +213,7 @@ public static class AnimationPathSceneUI
                 Vector3 position = pathPoint.worldPosition;
                 float pointHandleSize = HandleUtility.GetHandleSize(position) * 0.1f;
                 Handles.Label(position, "  Point " + i);
-                if (Handles.Button(position, Quaternion.identity, pointHandleSize, pointHandleSize, Handles.DotCap))
+                if (Handles.Button(position, handleRotation, pointHandleSize, pointHandleSize, Handles.DotCap))
                 {
                     selectedPointIndex = pointIndex;
                     if (Selection.activeGameObject != activeGameObject)
@@ -231,7 +236,7 @@ public static class AnimationPathSceneUI
                 if (i != 0)
                 {
                     Handles.DrawLine(position, pathPoint.worldInTangent);
-                    if (Handles.Button(pathPoint.worldInTangent, Quaternion.identity, pointHandleSize, pointHandleSize, Handles.DotCap))
+                    if (Handles.Button(pathPoint.worldInTangent, handleRotation, pointHandleSize, pointHandleSize, Handles.DotCap))
                     {
                         selectedPointIndex = inIndex;
                     }
@@ -239,7 +244,7 @@ public static class AnimationPathSceneUI
                     if (selectedPointIndex == inIndex)
                     {
                         EditorGUI.BeginChangeCheck();
-                        Vector3 pos = Handles.PositionHandle(pathPoint.worldInTangent, Quaternion.identity);
+                        Vector3 pos = Handles.PositionHandle(pathPoint.worldInTangent, handleRotation);
                         if (EditorGUI.EndChangeCheck() && SetPointTangent(i, pos, true))
                         {
                             return;
@@ -250,7 +255,7 @@ public static class AnimationPathSceneUI
                 if (i != numPos - 1)
                 {
                     Handles.DrawLine(position, pathPoint.worldOutTangent);
-                    if (Handles.Button(pathPoint.worldOutTangent, Quaternion.identity, pointHandleSize, pointHandleSize, Handles.DotCap))
+                    if (Handles.Button(pathPoint.worldOutTangent, handleRotation, pointHandleSize, pointHandleSize, Handles.DotCap))
                     {
                         selectedPointIndex = outIndex;
                     }
@@ -258,7 +263,7 @@ public static class AnimationPathSceneUI
                     if (selectedPointIndex == outIndex)
                     {
                         EditorGUI.BeginChangeCheck();
-                        Vector3 pos = Handles.PositionHandle(pathPoint.worldOutTangent, Quaternion.identity);
+                        Vector3 pos = Handles.PositionHandle(pathPoint.worldOutTangent, handleRotation);
                         if (EditorGUI.EndChangeCheck() && SetPointTangent(i, pos, false))
                         {
                             return;
@@ -312,14 +317,14 @@ public static class AnimationPathSceneUI
             pathPoint = points[pointIndex - 1];
             nextPathPoint = points[pointIndex];
 
-            offset = worldTangent - nextPathPoint.worldInTangent;
+            offset = GetLocalPosition(worldTangent) - GetLocalPosition(nextPathPoint.worldInTangent);
         }
         else
         {
             pathPoint = points[pointIndex];
             nextPathPoint = points[pointIndex + 1];
 
-            offset = worldTangent - pathPoint.worldOutTangent;
+            offset = GetLocalPosition(worldTangent) - GetLocalPosition(pathPoint.worldOutTangent);
         }
 
         string inPath = AnimationUtility.CalculateTransformPath(activeGameObject.transform, activeRootGameObject.transform);
@@ -350,33 +355,21 @@ public static class AnimationPathSceneUI
 
     private static Vector3 GetWorldPosition(Vector3 localPosition)
     {
-        if (activeRootGameObject != activeGameObject)
-        {
-            return activeRootGameObject.transform.TransformPoint(localPosition);
-        }
-
-        Transform parent = activeRootGameObject.transform.parent;
-        if (parent == null)
+        if (activeParentTransform == null)
         {
             return localPosition;
         }
 
-        return parent.TransformPoint(localPosition);
+        return activeParentTransform.TransformPoint(localPosition);
     }
 
     private static Vector3 GetLocalPosition(Vector3 worldPosition)
     {
-        if (activeRootGameObject != activeGameObject)
-        {
-            return activeRootGameObject.transform.InverseTransformPoint(worldPosition);
-        }
-
-        Transform parent = activeRootGameObject.transform.parent;
-        if (parent == null)
+        if (activeParentTransform == null)
         {
             return worldPosition;
         }
 
-        return parent.InverseTransformPoint(worldPosition);
+        return activeParentTransform.InverseTransformPoint(worldPosition);
     }
 }
