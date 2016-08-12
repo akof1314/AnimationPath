@@ -200,74 +200,75 @@ public static class AnimationPathSceneUI
             nextPathPoint.worldInTangent = p2;
         }
 
-        if (pointShow)
+        if (!pointShow)
         {
-            Quaternion handleRotation = activeParentTransform != null
+            return;
+        }
+
+        Quaternion handleRotation = activeParentTransform != null
                 ? activeParentTransform.rotation
                 : Quaternion.identity;
-            for (int i = 0; i < numPos; i++)
+        for (int i = 0; i < numPos; i++)
+        {
+            int pointIndex = i * 3;
+            Handles.color = Color.green;
+            AnimationPathPoint pathPoint = points[i];
+            Vector3 position = pathPoint.worldPosition;
+            float pointHandleSize = HandleUtility.GetHandleSize(position) * 0.04f;
+            float pointPickSize = pointHandleSize * 0.7f;
+            Handles.Label(position, " Point " + i);
+            if (Handles.Button(position, handleRotation, pointHandleSize, pointPickSize, Handles.DotCap))
             {
-                int pointIndex = i*3;
-                Handles.color = Color.green;
-                AnimationPathPoint pathPoint = points[i];
-                Vector3 position = pathPoint.worldPosition;
-                float pointHandleSize = HandleUtility.GetHandleSize(position) * 0.1f;
-                Handles.Label(position, "  Point " + i);
-                if (Handles.Button(position, handleRotation, pointHandleSize, pointHandleSize, Handles.DotCap))
+                selectedPointIndex = pointIndex;
+                if (Selection.activeGameObject != activeGameObject)
                 {
-                    selectedPointIndex = pointIndex;
-                    if (Selection.activeGameObject != activeGameObject)
-                    {
-                        Selection.activeGameObject = activeGameObject;
-                    }
-                    AnimationWindowUtil.SetCurrentTime(pathPoint.time);
+                    Selection.activeGameObject = activeGameObject;
+                }
+                AnimationWindowUtil.SetCurrentTime(pathPoint.time);
+            }
+
+            Handles.color = Color.grey;
+            int inIndex = pointIndex - 1;
+            int outIndex = pointIndex + 1;
+            if (selectedPointIndex < 0 || selectedPointIndex < inIndex || selectedPointIndex > outIndex)
+            {
+                continue;
+            }
+
+            if (i != 0)
+            {
+                Handles.DrawLine(position, pathPoint.worldInTangent);
+                if (Handles.Button(pathPoint.worldInTangent, handleRotation, pointHandleSize, pointPickSize, Handles.DotCap))
+                {
+                    selectedPointIndex = inIndex;
                 }
 
-                Handles.color = Color.grey;
-                pointHandleSize = pointHandleSize * 0.5f;
-
-                int inIndex = pointIndex - 1;
-                int outIndex = pointIndex + 1;
-                if (selectedPointIndex < 0 || selectedPointIndex < inIndex || selectedPointIndex > outIndex)
+                if (selectedPointIndex == inIndex)
                 {
-                    continue;
-                }
-
-                if (i != 0)
-                {
-                    Handles.DrawLine(position, pathPoint.worldInTangent);
-                    if (Handles.Button(pathPoint.worldInTangent, handleRotation, pointHandleSize, pointHandleSize, Handles.DotCap))
+                    EditorGUI.BeginChangeCheck();
+                    Vector3 pos = Handles.PositionHandle(pathPoint.worldInTangent, handleRotation);
+                    if (EditorGUI.EndChangeCheck() && SetPointTangent(i, pos, true))
                     {
-                        selectedPointIndex = inIndex;
-                    }
-
-                    if (selectedPointIndex == inIndex)
-                    {
-                        EditorGUI.BeginChangeCheck();
-                        Vector3 pos = Handles.PositionHandle(pathPoint.worldInTangent, handleRotation);
-                        if (EditorGUI.EndChangeCheck() && SetPointTangent(i, pos, true))
-                        {
-                            return;
-                        }
+                        return;
                     }
                 }
+            }
 
-                if (i != numPos - 1)
+            if (i != numPos - 1)
+            {
+                Handles.DrawLine(position, pathPoint.worldOutTangent);
+                if (Handles.Button(pathPoint.worldOutTangent, handleRotation, pointHandleSize, pointPickSize, Handles.DotCap))
                 {
-                    Handles.DrawLine(position, pathPoint.worldOutTangent);
-                    if (Handles.Button(pathPoint.worldOutTangent, handleRotation, pointHandleSize, pointHandleSize, Handles.DotCap))
-                    {
-                        selectedPointIndex = outIndex;
-                    }
+                    selectedPointIndex = outIndex;
+                }
 
-                    if (selectedPointIndex == outIndex)
+                if (selectedPointIndex == outIndex)
+                {
+                    EditorGUI.BeginChangeCheck();
+                    Vector3 pos = Handles.PositionHandle(pathPoint.worldOutTangent, handleRotation);
+                    if (EditorGUI.EndChangeCheck() && SetPointTangent(i, pos, false))
                     {
-                        EditorGUI.BeginChangeCheck();
-                        Vector3 pos = Handles.PositionHandle(pathPoint.worldOutTangent, handleRotation);
-                        if (EditorGUI.EndChangeCheck() && SetPointTangent(i, pos, false))
-                        {
-                            return;
-                        }
+                        return;
                     }
                 }
             }
