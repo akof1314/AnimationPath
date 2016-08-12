@@ -14,6 +14,7 @@ public static class AnimationPathSceneUI
     private static Transform activeParentTransform;
     private static List<AnimationPathPoint> animationPoints;
     private static int selectedPointIndex;
+    private static bool reloadPointsInfo;
 
     private static GUIContent contentTitle = new GUIContent("Animation Path");
     private static GUIContent contentOpen = new GUIContent("Enable Show Path");
@@ -168,6 +169,20 @@ public static class AnimationPathSceneUI
 
     private static void DrawSceneViewGUI()
     {
+        if (reloadPointsInfo)
+        {
+            reloadPointsInfo = false;
+            int num = animationPoints.Count;
+            InitPointsInfo();
+            if (animationPoints.Count > num)
+            {
+                // FIXME 这是为了修复新增点的时候，方向杆ID被改变了，所以操作无效
+                // 不完美，需要第二次点击的时候，才会获取新控件ID
+                GUIUtility.hotControl = 0;
+                Event.current.Use();
+            }
+        }
+
         if (activeGameObject == null)
         {
             return;
@@ -204,7 +219,7 @@ public static class AnimationPathSceneUI
         {
             return;
         }
-
+        
         Quaternion handleRotation = activeParentTransform != null
                 ? activeParentTransform.rotation
                 : Quaternion.identity;
@@ -275,16 +290,14 @@ public static class AnimationPathSceneUI
         }
     }
 
-    private static void OnCurveWasModified(AnimationClip clip, EditorCurveBinding binding, AnimationUtility.CurveModifiedType deleted)
+    private static void OnCurveWasModified(AnimationClip clip, EditorCurveBinding binding, AnimationUtility.CurveModifiedType type)
     {
         if (!enabled && activeAnimationClip != clip)
         {
             return;
         }
 
-        //todo 判断binding是不是想要的
-
-        InitPointsInfo();
+        reloadPointsInfo = true;
     }
 
     private static void onClipSelectionChanged()
@@ -298,7 +311,7 @@ public static class AnimationPathSceneUI
             {
                 if (clips[i] == activeAnimationClip)
                 {
-                    InitPointsInfo();
+                    reloadPointsInfo = true;
                     SceneView.RepaintAll();
                     return;
                 }
