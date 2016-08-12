@@ -8,7 +8,7 @@ public static class AnimationPathSceneUI
     public static bool enabled;
     public static GameObject activeGameObject;
     public static AnimationClip activeAnimationClip;
-    private static bool keepShow;
+    public static bool keepShow;
     private static bool pointShow = true;
     private static GameObject activeRootGameObject;
     private static Transform activeParentTransform;
@@ -48,7 +48,7 @@ public static class AnimationPathSceneUI
         {
             EditorGUILayout.BeginVertical(GUI.skin.box);
             EditorGUILayout.LabelField(contentOtherUse);
-            EditorGUILayout.ObjectField(contentGameObject, activeGameObject, typeof (GameObject), true);
+            EditorGUILayout.ObjectField(contentGameObject, activeGameObject, typeof(GameObject), true);
             EditorGUILayout.EndVertical();
             return;
         }
@@ -57,11 +57,7 @@ public static class AnimationPathSceneUI
         keepShow = EditorGUILayout.Toggle(contentKeepShow, keepShow);
         if (EditorGUI.EndChangeCheck())
         {
-            SceneView.onSceneGUIDelegate = (SceneView.OnSceneFunc)Delegate.RemoveAll(SceneView.onSceneGUIDelegate, new SceneView.OnSceneFunc(OnSceneViewGUI));
-            if (keepShow)
-            {
-                SceneView.onSceneGUIDelegate = (SceneView.OnSceneFunc)Delegate.Combine(SceneView.onSceneGUIDelegate, new SceneView.OnSceneFunc(OnSceneViewGUI));
-            }
+            SetKeepShow(keepShow);
         }
         EditorGUI.BeginChangeCheck();
         pointShow = EditorGUILayout.Toggle(contentPointShow, pointShow);
@@ -70,7 +66,7 @@ public static class AnimationPathSceneUI
             SceneView.RepaintAll();
         }
         EditorGUI.BeginDisabledGroup(true);
-        EditorGUILayout.ObjectField(contentGameObject, activeGameObject, typeof (GameObject), true);
+        EditorGUILayout.ObjectField(contentGameObject, activeGameObject, typeof(GameObject), true);
         EditorGUILayout.ObjectField(contentClip, activeAnimationClip, typeof(AnimationClip), false);
         EditorGUI.EndDisabledGroup();
     }
@@ -83,7 +79,7 @@ public static class AnimationPathSceneUI
         }
     }
 
-    private static void OpenSceneTool(GameObject go)
+    public static void OpenSceneTool(GameObject go)
     {
         enabled = false;
         activeGameObject = go;
@@ -115,6 +111,17 @@ public static class AnimationPathSceneUI
         AnimationWindowUtil.SetOnClipSelectionChanged(onClipSelectionChanged, true);
         AnimationUtility.onCurveWasModified -= OnCurveWasModified;
         SceneView.onSceneGUIDelegate = (SceneView.OnSceneFunc)Delegate.RemoveAll(SceneView.onSceneGUIDelegate, new SceneView.OnSceneFunc(OnSceneViewGUI));
+        SceneView.RepaintAll();
+    }
+
+    public static void SetKeepShow(bool show)
+    {
+        keepShow = show;
+        SceneView.onSceneGUIDelegate = (SceneView.OnSceneFunc)Delegate.RemoveAll(SceneView.onSceneGUIDelegate, new SceneView.OnSceneFunc(OnSceneViewGUI));
+        if (keepShow)
+        {
+            SceneView.onSceneGUIDelegate = (SceneView.OnSceneFunc)Delegate.Combine(SceneView.onSceneGUIDelegate, new SceneView.OnSceneFunc(OnSceneViewGUI));
+        }
         SceneView.RepaintAll();
     }
 
@@ -219,7 +226,7 @@ public static class AnimationPathSceneUI
         {
             return;
         }
-        
+
         Quaternion handleRotation = activeParentTransform != null
                 ? activeParentTransform.rotation
                 : Quaternion.identity;
