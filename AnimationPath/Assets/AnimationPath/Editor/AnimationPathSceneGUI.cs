@@ -151,7 +151,7 @@ public static class AnimationPathSceneUI
 
         if (curveX == null || curveY == null || curveZ == null)
         {
-            Debug.LogError(activeGameObject.name + " 必须要有完整的 Position 动画曲线！");
+            //Debug.LogError(activeGameObject.name + " 必须要有完整的 Position 动画曲线！");
             return false;
         }
 
@@ -174,7 +174,7 @@ public static class AnimationPathSceneUI
             reloadPointsInfo = false;
             int num = animationPoints.Count;
             InitPointsInfo();
-            if (animationPoints.Count > num)
+            if (pointShow && animationPoints.Count > num)
             {
                 // FIXME 这是为了修复新增点的时候，方向杆ID被改变了，所以操作无效
                 // 不完美，需要第二次点击的时候，才会获取新控件ID
