@@ -10,11 +10,13 @@ public class AnimationWindowReflect
     private Type m_TypeAnimationWindow;
     private Type m_TypeAnimEditor;
     private Type m_TypeAnimationWindowState;
+    private Type m_TypeAnimationWindowSelection;
     private EditorWindow m_FirstAnimationWindow;
 
     // 以下都是对第一个动画窗体的对象
     private object m_AnimEditor;
     private object m_AnimationWindowState;
+    private object m_AnimationWindowSelection;
     private PropertyInfo m_recordingInfo;
     private PropertyInfo m_currentTimeInfo;
     private PropertyInfo m_activeRootGameObjectInfo;
@@ -70,6 +72,18 @@ public class AnimationWindowReflect
         }
     }
 
+    private Type animationWindowSelectionType
+    {
+        get
+        {
+            if (m_TypeAnimationWindowSelection == null)
+            {
+                m_TypeAnimationWindowSelection = assembly.GetType("UnityEditorInternal.AnimationWindowSelection");
+            }
+            return m_TypeAnimationWindowSelection;
+        }
+    }
+
     /// <summary>
     /// 获取第一个动画窗口
     /// </summary>
@@ -119,6 +133,22 @@ public class AnimationWindowReflect
                 }
             }
             return m_AnimationWindowState;
+        }
+    }
+
+    private object animationWindowSelection
+    {
+        get
+        {
+            if (m_AnimationWindowSelection == null)
+            {
+                PropertyInfo selectionInfo = animationWindowStateType.GetProperty("selection", BindingFlags.Instance | BindingFlags.Public);
+                if (animationWindowState != null)
+                {
+                    m_AnimationWindowSelection = selectionInfo.GetValue(animationWindowState, null);
+                }
+            }
+            return m_AnimationWindowSelection;
         }
     }
 
@@ -218,7 +248,11 @@ public class AnimationWindowReflect
         {
             if (m_onClipSelectionChangedInfo == null)
             {
+#if UNITY_5_4_OR_NEWER
+                m_onClipSelectionChangedInfo = animationWindowSelectionType.GetField("onSelectionChanged", BindingFlags.Instance | BindingFlags.Public);
+#else
                 m_onClipSelectionChangedInfo = animationWindowStateType.GetField("onClipSelectionChanged", BindingFlags.Instance | BindingFlags.Public);
+#endif
             }
             return m_onClipSelectionChangedInfo;
         }
@@ -229,7 +263,12 @@ public class AnimationWindowReflect
     /// </summary>
     public Action onClipSelectionChanged
     {
+#if UNITY_5_4_OR_NEWER
+        get { return (Action)onClipSelectionChangedInfo.GetValue(animationWindowSelection); }
+        set { onClipSelectionChangedInfo.SetValue(animationWindowSelection, value); }
+#else
         get { return (Action) onClipSelectionChangedInfo.GetValue(animationWindowState); }
         set { onClipSelectionChangedInfo.SetValue(animationWindowState, value);}
+#endif
     }
 }
