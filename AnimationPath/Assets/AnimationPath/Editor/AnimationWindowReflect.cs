@@ -17,12 +17,14 @@ public class AnimationWindowReflect
     private object m_AnimEditor;
     private object m_AnimationWindowState;
     private object m_AnimationWindowSelection;
+    private PropertyInfo m_playingInfo;
     private PropertyInfo m_recordingInfo;
     private PropertyInfo m_currentTimeInfo;
     private PropertyInfo m_activeRootGameObjectInfo;
     private PropertyInfo m_activeAnimationClipInfo;
     private FieldInfo m_onClipSelectionChangedInfo;
     private Func<float> m_CurrentTimeGetFunc;
+    private MethodInfo m_ResampleAnimationMethod;
 
     private Assembly assembly
     {
@@ -152,6 +154,27 @@ public class AnimationWindowReflect
         }
     }
 
+    private PropertyInfo playingInfo
+    {
+        get
+        {
+            if (m_playingInfo == null)
+            {
+                m_playingInfo = animationWindowStateType.GetProperty("playing", BindingFlags.Instance | BindingFlags.Public);
+            }
+            return m_playingInfo;
+        }
+    }
+
+    /// <summary>
+    /// 是否正在播放动画
+    /// </summary>
+    public bool playing
+    {
+        get { return (bool) playingInfo.GetValue(animationWindowState, null); }
+        set { playingInfo.SetValue(animationWindowState, value, null); }
+    }
+    
     private PropertyInfo recordingInfo
     {
         get
@@ -270,5 +293,14 @@ public class AnimationWindowReflect
         get { return (Action) onClipSelectionChangedInfo.GetValue(animationWindowState); }
         set { onClipSelectionChangedInfo.SetValue(animationWindowState, value);}
 #endif
+    }
+    
+    public void ResampleAnimation()
+    {
+        if (m_ResampleAnimationMethod == null)
+        {
+            m_ResampleAnimationMethod = animationWindowStateType.GetMethod("ResampleAnimation", BindingFlags.Instance | BindingFlags.Public);
+        }
+        m_ResampleAnimationMethod.Invoke(animationWindowState, null);
     }
 }
