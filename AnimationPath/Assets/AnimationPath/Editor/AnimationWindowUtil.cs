@@ -135,8 +135,10 @@ public static class AnimationWindowUtil
             return;
         }
 
-        animationWindowReflect.recording = true;
         animationWindowReflect.currentTime = time;
+        animationWindowReflect.recording = true;
+        animationWindowReflect.playing = false;
+        animationWindowReflect.ResampleAnimation();
         animationWindowReflect.firstAnimationWindow.Repaint();
     }
 
