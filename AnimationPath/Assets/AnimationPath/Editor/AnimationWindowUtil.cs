@@ -98,6 +98,28 @@ public static class AnimationWindowUtil
     }
 
     /// <summary>
+    /// 设置动画窗口的当前动画片段项
+    /// </summary>
+    /// <param name="clipName"></param>
+    public static bool SetActiveAnimationClip(AnimationClip clip)
+    {
+        AnimationWindowReflect animationWindowReflect = GetAnimationWindowReflect();
+        if (!animationWindowReflect.firstAnimationWindow)
+        {
+            return false;
+        }
+        GameObject activeRootGameObject = animationWindowReflect.activeRootGameObject;
+        if (activeRootGameObject == null)
+        {
+            Debug.Log("没有动画 activeRootGameObject！");
+            return false;
+        }
+
+        animationWindowReflect.activeAnimationClip = clip;
+        return true;
+    }
+
+    /// <summary>
     /// 获取当前活动的动画片段
     /// </summary>
     /// <returns></returns>

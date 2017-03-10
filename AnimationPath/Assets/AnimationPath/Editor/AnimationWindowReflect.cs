@@ -17,6 +17,7 @@ public class AnimationWindowReflect
     private object m_AnimEditor;
     private object m_AnimationWindowState;
     private object m_AnimationWindowSelection;
+    private object m_AnimationWindowSelectionItem;
     private PropertyInfo m_playingInfo;
     private PropertyInfo m_recordingInfo;
     private PropertyInfo m_currentTimeInfo;
@@ -25,6 +26,7 @@ public class AnimationWindowReflect
     private FieldInfo m_onClipSelectionChangedInfo;
     private Func<float> m_CurrentTimeGetFunc;
     private MethodInfo m_ResampleAnimationMethod;
+    private MethodInfo m_UpdateClipMethodInfo;
 
     private Assembly assembly
     {
@@ -154,6 +156,22 @@ public class AnimationWindowReflect
         }
     }
 
+    private object animationWindowSelectionItem
+    {
+        get
+        {
+            if (m_AnimationWindowSelectionItem == null)
+            {
+                PropertyInfo selectionInfo = animationWindowStateType.GetProperty("selectedItem", BindingFlags.Instance | BindingFlags.Public);
+                if (animationWindowState != null)
+                {
+                    m_AnimationWindowSelectionItem = selectionInfo.GetValue(animationWindowState, null);
+                }
+            }
+            return m_AnimationWindowSelectionItem;
+        }
+    }
+
     private PropertyInfo playingInfo
     {
         get
@@ -171,10 +189,10 @@ public class AnimationWindowReflect
     /// </summary>
     public bool playing
     {
-        get { return (bool) playingInfo.GetValue(animationWindowState, null); }
+        get { return (bool)playingInfo.GetValue(animationWindowState, null); }
         set { playingInfo.SetValue(animationWindowState, value, null); }
     }
-    
+
     private PropertyInfo recordingInfo
     {
         get
@@ -241,7 +259,7 @@ public class AnimationWindowReflect
     /// </summary>
     public GameObject activeRootGameObject
     {
-        get { return (GameObject) activeRootGameObjectInfo.GetValue(animationWindowState, null); }
+        get { return (GameObject)activeRootGameObjectInfo.GetValue(animationWindowState, null); }
     }
 
     private PropertyInfo activeAnimationClipInfo
@@ -261,8 +279,12 @@ public class AnimationWindowReflect
     /// </summary>
     public AnimationClip activeAnimationClip
     {
-        get { return (AnimationClip) activeAnimationClipInfo.GetValue(animationWindowState, null); }
-        set { activeAnimationClipInfo.SetValue(animationWindowState, value, null);}
+        get { return (AnimationClip)activeAnimationClipInfo.GetValue(animationWindowState, null); }
+#if UNITY_5_4_OR_NEWER
+        set { UpdateClip(animationWindowSelectionItem, value); }
+#else
+        set { activeAnimationClipInfo.SetValue(animationWindowState, value, null); }
+#endif
     }
 
     private FieldInfo onClipSelectionChangedInfo
@@ -294,7 +316,7 @@ public class AnimationWindowReflect
         set { onClipSelectionChangedInfo.SetValue(animationWindowState, value);}
 #endif
     }
-    
+
     public void ResampleAnimation()
     {
         if (m_ResampleAnimationMethod == null)
@@ -302,5 +324,14 @@ public class AnimationWindowReflect
             m_ResampleAnimationMethod = animationWindowStateType.GetMethod("ResampleAnimation", BindingFlags.Instance | BindingFlags.Public);
         }
         m_ResampleAnimationMethod.Invoke(animationWindowState, null);
+    }
+
+    private void UpdateClip(object itemToUpdate, AnimationClip newClip)
+    {
+        if (m_UpdateClipMethodInfo == null)
+        {
+            m_UpdateClipMethodInfo = animationWindowSelectionType.GetMethod("UpdateClip", BindingFlags.Instance | BindingFlags.Public);
+        }
+        m_UpdateClipMethodInfo.Invoke(animationWindowSelection, new[] { itemToUpdate, newClip });
     }
 }
