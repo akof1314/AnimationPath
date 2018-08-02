@@ -27,6 +27,7 @@ public class AnimationWindowReflect
     private Func<float> m_CurrentTimeGetFunc;
     private MethodInfo m_ResampleAnimationMethod;
     private MethodInfo m_UpdateClipMethodInfo;
+    private MethodInfo m_StartRecordingethodInfo;
 
     private Assembly assembly
     {
@@ -190,7 +191,11 @@ public class AnimationWindowReflect
     public bool playing
     {
         get { return (bool)playingInfo.GetValue(animationWindowState, null); }
+#if UNITY_5_6_OR_NEWER
+        set {  }
+#else
         set { playingInfo.SetValue(animationWindowState, value, null); }
+#endif
     }
 
     private PropertyInfo recordingInfo
@@ -211,7 +216,21 @@ public class AnimationWindowReflect
     public bool recording
     {
         get { return (bool)recordingInfo.GetValue(animationWindowState, null); }
+#if UNITY_5_6_OR_NEWER
+        set
+        {
+            if (value)
+            {
+                StartRecording();
+            }
+            else
+            {
+                AnimationMode.StopAnimationMode();
+            }
+        }
+#else
         set { recordingInfo.SetValue(animationWindowState, value, null); }
+#endif
     }
 
     private PropertyInfo currentTimeInfo
@@ -319,11 +338,14 @@ public class AnimationWindowReflect
 
     public void ResampleAnimation()
     {
+#if UNITY_5_6_OR_NEWER
+#else
         if (m_ResampleAnimationMethod == null)
         {
             m_ResampleAnimationMethod = animationWindowStateType.GetMethod("ResampleAnimation", BindingFlags.Instance | BindingFlags.Public);
         }
         m_ResampleAnimationMethod.Invoke(animationWindowState, null);
+#endif
     }
 
     private void UpdateClip(object itemToUpdate, AnimationClip newClip)
@@ -333,5 +355,14 @@ public class AnimationWindowReflect
             m_UpdateClipMethodInfo = animationWindowSelectionType.GetMethod("UpdateClip", BindingFlags.Instance | BindingFlags.Public);
         }
         m_UpdateClipMethodInfo.Invoke(animationWindowSelection, new[] { itemToUpdate, newClip });
+    }
+
+    private void StartRecording()
+    {
+        if (m_StartRecordingethodInfo == null)
+        {
+            m_StartRecordingethodInfo = animationWindowStateType.GetMethod("StartRecording", BindingFlags.Instance | BindingFlags.Public);
+        }
+        m_StartRecordingethodInfo.Invoke(animationWindowState, null);
     }
 }
