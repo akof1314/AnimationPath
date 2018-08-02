@@ -42,18 +42,21 @@ public class AnimationKeyframeTangentToConstantWindow : EditorWindow
             return;
         }
 
+        float currentTime = animationWindowReflect.currentTime;
         if ((activeAnimationClip.hideFlags & HideFlags.NotEditable) != HideFlags.None)
         {
             // FBX 动画则自动执行拷贝
             AnimationClip oldClip = activeAnimationClip;
             activeAnimationClip = CopyAnimationClipAsset(activeAnimationClip);
+            animationWindowReflect.activeAnimationClip = activeAnimationClip;
+            animationWindowReflect.currentTime = currentTime;
             if (onClipCopyModify != null)
             {
                 onClipCopyModify(oldClip, activeAnimationClip);
             }
         }
 
-        KeyframeTangentToConstant(activeAnimationClip, animationWindowReflect.currentTime);
+        KeyframeTangentToConstant(activeAnimationClip, currentTime);
         animationWindowReflect.firstAnimationWindow.Repaint();
     }
 
