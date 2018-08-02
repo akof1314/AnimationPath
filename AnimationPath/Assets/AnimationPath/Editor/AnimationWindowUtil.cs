@@ -159,9 +159,11 @@ public static class AnimationWindowUtil
         }
 
         animationWindowReflect.currentTime = time;
+#if !UNITY_5_6_OR_NEWER
         animationWindowReflect.recording = true;
         animationWindowReflect.playing = false;
         animationWindowReflect.ResampleAnimation();
+#endif
         animationWindowReflect.firstAnimationWindow.Repaint();
     }
 
@@ -187,7 +189,7 @@ public static class AnimationWindowUtil
         animationWindowReflect.firstAnimationWindow.Repaint();
     }
 
-    private static AnimationWindowReflect GetAnimationWindowReflect()
+    public static AnimationWindowReflect GetAnimationWindowReflect()
     {
         AnimationWindowReflect animationWindowReflect = new AnimationWindowReflect();
         if (!animationWindowReflect.firstAnimationWindow)
