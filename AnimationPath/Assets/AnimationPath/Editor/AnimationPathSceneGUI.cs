@@ -239,7 +239,11 @@ public static class AnimationPathSceneUI
             float pointHandleSize = HandleUtility.GetHandleSize(position) * 0.04f;
             float pointPickSize = pointHandleSize * 0.7f;
             Handles.Label(position, " Point " + i);
+#if UNITY_5_5_OR_NEWER
+            if (Handles.Button(position, handleRotation, pointHandleSize, pointPickSize, Handles.DotHandleCap))
+#else
             if (Handles.Button(position, handleRotation, pointHandleSize, pointPickSize, Handles.DotCap))
+#endif
             {
                 selectedPointIndex = pointIndex;
                 if (Selection.activeGameObject != activeGameObject)
@@ -260,7 +264,11 @@ public static class AnimationPathSceneUI
             if (i != 0)
             {
                 Handles.DrawLine(position, pathPoint.worldInTangent);
+#if UNITY_5_5_OR_NEWER
+                if (Handles.Button(pathPoint.worldInTangent, handleRotation, pointHandleSize, pointPickSize, Handles.DotHandleCap))
+#else
                 if (Handles.Button(pathPoint.worldInTangent, handleRotation, pointHandleSize, pointPickSize, Handles.DotCap))
+#endif
                 {
                     selectedPointIndex = inIndex;
                 }
@@ -279,7 +287,11 @@ public static class AnimationPathSceneUI
             if (i != numPos - 1)
             {
                 Handles.DrawLine(position, pathPoint.worldOutTangent);
+#if UNITY_5_5_OR_NEWER
+                if (Handles.Button(pathPoint.worldOutTangent, handleRotation, pointHandleSize, pointPickSize, Handles.DotHandleCap))
+#else
                 if (Handles.Button(pathPoint.worldOutTangent, handleRotation, pointHandleSize, pointPickSize, Handles.DotCap))
+#endif
                 {
                     selectedPointIndex = outIndex;
                 }
