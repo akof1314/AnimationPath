@@ -28,6 +28,7 @@ public class AnimationWindowReflect
     private MethodInfo m_ResampleAnimationMethod;
     private MethodInfo m_UpdateClipMethodInfo;
     private MethodInfo m_StartRecordingethodInfo;
+    private FieldInfo m_onFrameRateChangeInfo;
 
     private Assembly assembly
     {
@@ -322,6 +323,19 @@ public class AnimationWindowReflect
         }
     }
 
+    private FieldInfo onFrameRateChangeInfo
+    {
+        get
+        {
+            if (m_onFrameRateChangeInfo == null)
+            {
+                m_onFrameRateChangeInfo = animationWindowStateType.GetField("onFrameRateChange", BindingFlags.Instance | BindingFlags.Public);
+            }
+
+            return m_onFrameRateChangeInfo;
+        }
+    }
+
     /// <summary>
     /// 动画片段切换事件
     /// </summary>
@@ -334,6 +348,12 @@ public class AnimationWindowReflect
         get { return (Action) onClipSelectionChangedInfo.GetValue(animationWindowState); }
         set { onClipSelectionChangedInfo.SetValue(animationWindowState, value);}
 #endif
+    }
+
+    public Action<float> onFrameRateChange
+    {
+        get { return (Action<float>)onFrameRateChangeInfo.GetValue(animationWindowState); }
+        set { onFrameRateChangeInfo.SetValue(animationWindowState, value); }
     }
 
     public void ResampleAnimation()

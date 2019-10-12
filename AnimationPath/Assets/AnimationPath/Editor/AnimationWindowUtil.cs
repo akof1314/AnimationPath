@@ -150,6 +150,23 @@ public static class AnimationWindowUtil
         animationWindowReflect.onClipSelectionChanged = onClipSelectionChanged;
     }
 
+    public static void SetOnFrameRateChange(Action<float> onFrameRateChangeAction, bool removeOnly = false)
+    {
+        AnimationWindowReflect animationWindowReflect = GetAnimationWindowReflect();
+        if (!animationWindowReflect.firstAnimationWindow)
+        {
+            return;
+        }
+
+        Action<float> onFrameRateChange = animationWindowReflect.onFrameRateChange;
+        onFrameRateChange = (Action<float>)Delegate.RemoveAll(onFrameRateChange, onFrameRateChangeAction);
+        if (!removeOnly)
+        {
+            onFrameRateChange = (Action<float>)Delegate.Combine(onFrameRateChange, onFrameRateChangeAction);
+        }
+        animationWindowReflect.onFrameRateChange = onFrameRateChange;
+    }
+
     public static void SetCurrentTime(float time)
     {
         AnimationWindowReflect animationWindowReflect = GetAnimationWindowReflect();
