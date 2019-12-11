@@ -155,14 +155,32 @@ public static class AnimationPathSceneUI
         AnimationCurve curveX = AnimationUtility.GetEditorCurve(activeAnimationClip, EditorCurveBinding.FloatCurve(inPath, inType, "m_LocalPosition.x"));
         AnimationCurve curveY = AnimationUtility.GetEditorCurve(activeAnimationClip, EditorCurveBinding.FloatCurve(inPath, inType, "m_LocalPosition.y"));
         AnimationCurve curveZ = AnimationUtility.GetEditorCurve(activeAnimationClip, EditorCurveBinding.FloatCurve(inPath, inType, "m_LocalPosition.z"));
+        Vector3 initPosition = activeRootGameObject.transform.localPosition;
 
         if (curveX == null || curveY == null || curveZ == null)
         {
-            //Debug.LogError(activeGameObject.name + " 必须要有完整的 Position 动画曲线！");
-            return false;
+            // 有可能是UI的动画
+            var rt = activeRootGameObject.transform.GetComponent<RectTransform>();
+            if (rt)
+            {
+                inType = typeof(RectTransform);
+                curveX = AnimationUtility.GetEditorCurve(activeAnimationClip, EditorCurveBinding.FloatCurve(inPath, inType, "m_AnchoredPosition.x"));
+                curveY = AnimationUtility.GetEditorCurve(activeAnimationClip, EditorCurveBinding.FloatCurve(inPath, inType, "m_AnchoredPosition.y"));
+                curveZ = AnimationUtility.GetEditorCurve(activeAnimationClip, EditorCurveBinding.FloatCurve(inPath, inType, "m_AnchoredPosition.z"));
+                initPosition = rt.anchoredPosition;
+
+                if (curveX == null && curveY == null && curveZ == null)
+                {
+                    return false;
+                }
+            }
+            else
+            {
+                return false;
+            }
         }
 
-        animationPoints = AnimationPathPoint.MakePoints(curveX, curveY, curveZ);
+        animationPoints = AnimationPathPoint.MakePoints(curveX, curveY, curveZ, initPosition);
         return true;
     }
 
@@ -372,15 +390,45 @@ public static class AnimationPathSceneUI
 
         if (curveX == null || curveY == null || curveZ == null)
         {
-            return false;
+            var rt = activeRootGameObject.transform.GetComponent<RectTransform>();
+            if (rt)
+            {
+                inType = typeof(RectTransform);
+                bindingX = EditorCurveBinding.FloatCurve(inPath, inType, "m_AnchoredPosition.x");
+                bindingY = EditorCurveBinding.FloatCurve(inPath, inType, "m_AnchoredPosition.y");
+                bindingZ = EditorCurveBinding.FloatCurve(inPath, inType, "m_AnchoredPosition.z");
+                curveX = AnimationUtility.GetEditorCurve(activeAnimationClip, bindingX);
+                curveY = AnimationUtility.GetEditorCurve(activeAnimationClip, bindingY);
+                curveZ = AnimationUtility.GetEditorCurve(activeAnimationClip, bindingZ);
+
+                if (curveX == null && curveY == null && curveZ == null)
+                {
+                    return false;
+                }
+            }
+            else
+            {
+                return false;
+            }
         }
 
         AnimationPathPoint.ModifyPointTangent(pathPoint, nextPathPoint, offset, isInTangent, curveX, curveY, curveZ);
 
         Undo.RegisterCompleteObjectUndo(activeAnimationClip, "Edit Curve");
-        AnimationUtility.SetEditorCurve(activeAnimationClip, bindingX, curveX);
-        AnimationUtility.SetEditorCurve(activeAnimationClip, bindingY, curveY);
-        AnimationUtility.SetEditorCurve(activeAnimationClip, bindingZ, curveZ);
+        if (curveX != null)
+        {
+            AnimationUtility.SetEditorCurve(activeAnimationClip, bindingX, curveX);
+        }
+
+        if (curveY != null)
+        {
+            AnimationUtility.SetEditorCurve(activeAnimationClip, bindingY, curveY);
+        }
+
+        if (curveZ != null)
+        {
+            AnimationUtility.SetEditorCurve(activeAnimationClip, bindingZ, curveZ);
+        }
         AnimationWindowUtil.Repaint();
 
         return true;

@@ -39,40 +39,52 @@ public class AnimationPathPoint
         endTangent.z -= (dx * nextPathPoint.inTangent.z * 1 / 3);
     }
 
-    public static List<AnimationPathPoint> MakePoints(AnimationCurve curveX, AnimationCurve curveY, AnimationCurve curveZ)
+    public static List<AnimationPathPoint> MakePoints(AnimationCurve curveX, AnimationCurve curveY, AnimationCurve curveZ, Vector3 initPosition)
     {
         List<AnimationPathPoint> points = new List<AnimationPathPoint>();
         List<float> times = new List<float>();
-        for (int i = 0; i < curveX.length; i++)
+        if (curveX != null)
         {
-            if (!times.Contains(curveX.keys[i].time))
+            for (int i = 0; i < curveX.length; i++)
             {
-                times.Add(curveX.keys[i].time);
+                if (!times.Contains(curveX.keys[i].time))
+                {
+                    times.Add(curveX.keys[i].time);
+                }
             }
         }
-        for (int i = 0; i < curveY.length; i++)
+
+        if (curveY != null)
         {
-            if (!times.Contains(curveY.keys[i].time))
+            for (int i = 0; i < curveY.length; i++)
             {
-                times.Add(curveY.keys[i].time);
+                if (!times.Contains(curveY.keys[i].time))
+                {
+                    times.Add(curveY.keys[i].time);
+                }
             }
         }
-        for (int i = 0; i < curveZ.length; i++)
+
+        if (curveZ != null)
         {
-            if (!times.Contains(curveZ.keys[i].time))
+            for (int i = 0; i < curveZ.length; i++)
             {
-                times.Add(curveZ.keys[i].time);
+                if (!times.Contains(curveZ.keys[i].time))
+                {
+                    times.Add(curveZ.keys[i].time);
+                }
             }
         }
+        
         times.Sort();
 
         for (int i = 0; i < times.Count; i++)
         {
             float time = times[i];
             AnimationPathPoint pathPoint = new AnimationPathPoint(
-                GetKeyframeAtTime(curveX, time),
-                GetKeyframeAtTime(curveY, time),
-                GetKeyframeAtTime(curveZ, time)
+                GetKeyframeAtTime(curveX, time, initPosition.x),
+                GetKeyframeAtTime(curveY, time, initPosition.y),
+                GetKeyframeAtTime(curveZ, time, initPosition.z)
                 );
             points.Add(pathPoint);
         }
@@ -80,8 +92,13 @@ public class AnimationPathPoint
         return points;
     }
 
-    private static Keyframe GetKeyframeAtTime(AnimationCurve curve, float time)
+    private static Keyframe GetKeyframeAtTime(AnimationCurve curve, float time, float initVal)
     {
+        if (curve == null)
+        {
+            return new Keyframe(time, initVal);
+        }
+
         for (int j = 0; j < curve.length; j++)
         {
             if (Mathf.Approximately(curve.keys[j].time, time))
@@ -140,6 +157,11 @@ public class AnimationPathPoint
     private static void ModifyCurveAtKeyframe(AnimationCurve curve, float time, float value, float inTangent, float outTangent,
         int tangentMode, int leftRight)
     {
+        if (curve == null)
+        {
+            return;
+        }
+
         Keyframe keyframe = new Keyframe(time, value, inTangent, outTangent);
         keyframe.tangentMode = tangentMode;
         ModifyPointTangentMode(ref keyframe, leftRight);
