@@ -99,7 +99,13 @@ public class AnimationWindowReflect
         {
             if (m_FirstAnimationWindow == null)
             {
-                MethodInfo getAllAnimationWindowsInfo = animationWindowType.GetMethod("GetAllAnimationWindows", BindingFlags.Public | BindingFlags.Static);
+                MethodInfo getAllAnimationWindowsInfo = animationWindowType.GetMethod("GetAllAnimationWindows", 
+#if UNITY_2020_2_OR_NEWER
+                    BindingFlags.NonPublic 
+#else
+                              BindingFlags.Public
+#endif
+                    | BindingFlags.Static);
                 IList animationWindows = getAllAnimationWindowsInfo.Invoke(null, null) as IList;
                 if (animationWindows.Count > 0)
                 {

@@ -97,7 +97,11 @@ public static class AnimationPathSceneUI
         AnimationUtility.onCurveWasModified += OnCurveWasModified;
         if (keepShow)
         {
+#if UNITY_2019_1_OR_NEWER
+            SceneView.duringSceneGui += OnSceneViewGUI;
+#else
             SceneView.onSceneGUIDelegate = (SceneView.OnSceneFunc)Delegate.Combine(SceneView.onSceneGUIDelegate, new SceneView.OnSceneFunc(OnSceneViewGUI));
+#endif
         }
 
         enabled = true;
@@ -110,18 +114,32 @@ public static class AnimationPathSceneUI
         enabled = false;
         AnimationWindowUtil.SetOnFrameRateChange(onClipSelectionChanged, true);
         AnimationUtility.onCurveWasModified -= OnCurveWasModified;
+        
+        
+#if UNITY_2019_1_OR_NEWER
+        SceneView.duringSceneGui -= OnSceneViewGUI;
+#else
         SceneView.onSceneGUIDelegate = (SceneView.OnSceneFunc)Delegate.RemoveAll(SceneView.onSceneGUIDelegate, new SceneView.OnSceneFunc(OnSceneViewGUI));
+#endif
         SceneView.RepaintAll();
     }
 
     public static void SetKeepShow(bool show)
     {
         keepShow = show;
+#if UNITY_2019_1_OR_NEWER
+        SceneView.duringSceneGui -= OnSceneViewGUI;
+        if (keepShow)
+        {
+            SceneView.duringSceneGui += OnSceneViewGUI;
+        }
+#else
         SceneView.onSceneGUIDelegate = (SceneView.OnSceneFunc)Delegate.RemoveAll(SceneView.onSceneGUIDelegate, new SceneView.OnSceneFunc(OnSceneViewGUI));
         if (keepShow)
         {
             SceneView.onSceneGUIDelegate = (SceneView.OnSceneFunc)Delegate.Combine(SceneView.onSceneGUIDelegate, new SceneView.OnSceneFunc(OnSceneViewGUI));
         }
+#endif
         SceneView.RepaintAll();
     }
 

@@ -19,8 +19,16 @@ public class AnimationPathPoint
         position = new Vector3(keyframeX.value, keyframeY.value, keyframeZ.value);
         inTangent = new Vector3(keyframeX.inTangent, keyframeY.inTangent, keyframeZ.inTangent);
         outTangent = new Vector3(keyframeX.outTangent, keyframeY.outTangent, keyframeZ.outTangent);
+#pragma warning disable CS0618 // 类型或成员已过时
+
+#pragma warning disable CS0618 // 类型或成员已过时
         tangentMode = new[] {keyframeX.tangentMode, keyframeY.tangentMode, keyframeZ.tangentMode};
+#pragma warning restore CS0618 // 类型或成员已过时
+
+#pragma warning disable CS0618 // 类型或成员已过时
+#pragma warning restore CS0618 // 类型或成员已过时
     }
+#pragma warning restore CS0618 // 类型或成员已过时
 
     public static void CalcTangents(AnimationPathPoint pathPoint, AnimationPathPoint nextPathPoint,
         out Vector3 startTangent, out Vector3 endTangent)
@@ -163,7 +171,9 @@ public class AnimationPathPoint
         }
 
         Keyframe keyframe = new Keyframe(time, value, inTangent, outTangent);
+#pragma warning disable CS0618 // 类型或成员已过时
         keyframe.tangentMode = tangentMode;
+#pragma warning restore CS0618 // 类型或成员已过时
         ModifyPointTangentMode(ref keyframe, leftRight);
 
         for (int j = 0; j < curve.length; j++)
